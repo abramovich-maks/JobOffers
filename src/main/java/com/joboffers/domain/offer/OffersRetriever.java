@@ -12,7 +12,6 @@ import static com.joboffers.domain.offer.OfferMapper.mapFromOfferToOfferResponse
 class OffersRetriever {
 
     private final OfferRepository offerRepository;
-    private final OfferAdder offerAdder;
 
     List<OfferResponseDto> findAllOffers() {
         return offerRepository.findAllOffers().stream()
