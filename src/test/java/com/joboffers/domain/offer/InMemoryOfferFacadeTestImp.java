@@ -5,13 +5,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 class InMemoryOfferFacadeTestImp implements OfferRepository {
 
     Map<String, Offer> inMemoryDatabase = new ConcurrentHashMap<>();
-    private final AtomicInteger key = new AtomicInteger(0);
-
 
     @Override
     public List<Offer> findAllOffers() {
@@ -36,6 +33,7 @@ class InMemoryOfferFacadeTestImp implements OfferRepository {
         inMemoryDatabase.put(id.toString(), offer);
         return offer;
     }
+
     @Override
     public boolean existsByOfferUrl(final String offerUrl) {
         long count = inMemoryDatabase.values()
