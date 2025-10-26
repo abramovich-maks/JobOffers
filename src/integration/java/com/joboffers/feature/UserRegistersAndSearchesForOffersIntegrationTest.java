@@ -3,7 +3,6 @@ package com.joboffers.feature;
 import com.joboffers.BaseIntegrationTest;
 
 class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTest {
-
 //         step 1: na zewnętrznym serwerze HTTP http://server/offers nie ma żadnych ofert (26.10.2025 09:00)
 //         step 2: harmonogram uruchamia się po raz pierwszy o 12:00 i wysyła żądanie GET do zewnętrznego serwera
 //         step 3: system dodaje 0 ofert do bazy danych
