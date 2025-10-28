@@ -3,18 +3,15 @@ package com.joboffers.feature;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.joboffers.BaseIntegrationTest;
 import com.joboffers.ExampleJobOfferResponse;
-import com.joboffers.domain.offer.JobOfferFetchable;
-import com.joboffers.domain.offer.dto.GetOfferResponseDto;
+import com.joboffers.infrastructure.offer.scheduler.HttpOffersScheduler;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
-import java.util.List;
-
 class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTest implements ExampleJobOfferResponse {
 
     @Autowired
-    JobOfferFetchable jobOfferFetchable;
+    HttpOffersScheduler httpOffersScheduler;
 
     @Test
     public void should_user_views_offers() {
@@ -23,12 +20,12 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
                 .willReturn(WireMock.aResponse()
                         .withStatus(HttpStatus.OK.value())
                         .withHeader("Content-Type", "application/json")
-                        .withBody(bodyWithFourOffersJson())));
+                        .withBody(bodyWithOneOfferJson())));
 
-        List<GetOfferResponseDto> getOfferResponseDtos = jobOfferFetchable.fetchOffers();
-    }
-//         step 2: harmonogram uruchamia się po raz pierwszy o 12:00 i wysyła żądanie GET do zewnętrznego serwera
+//         step 2: harmonogram uruchamia się po raz pierwszy i wysyła żądanie GET do zewnętrznego serwera
 //         step 3: system dodaje 0 ofert do bazy danych
+        httpOffersScheduler.fetchAllOffersAndSaveIfNotExists();
+    }
 //         step 4: użytkownik próbuje uzyskać token JWT, wysyłając POST /token z mail=maksim@mail.con i password=12345 o 12:10
 //         step 5: system zwraca UNAUTHORIZED (401)
 //         step 6: użytkownik wysyła GET /offers bez tokena JWT o 12:15
