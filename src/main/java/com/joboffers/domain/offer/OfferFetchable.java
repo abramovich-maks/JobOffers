@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.joboffers.domain.offer.OfferMapper.mapFromOfferToOfferResponseDto;
+
 @AllArgsConstructor
 class OfferFetchable {
 
@@ -15,17 +17,16 @@ class OfferFetchable {
     List<OfferResponseDto> fetchAllOffersAndSaveAllIfNotExists() {
         List<Offer> jobOffers = fetchOffers();
         final List<Offer> newOffers = filterNewJobOffers(jobOffers);
-        return jobOffers.stream().map(OfferMapper::mapFromOfferToOfferResponseDto)
+        List<OfferResponseDto> savedOfferDtos = offerRepository.saveAll(newOffers).stream()
+                .map(OfferMapper::mapFromOfferToOfferResponseDto)
                 .toList();
-//        return offerRepository.saveAll(newOffers).stream()
-//                .map(OfferMapper::mapFromOfferToOfferResponseDto)
-//                .toList();
+        return savedOfferDtos;
     }
 
     private List<Offer> filterNewJobOffers(final List<Offer> jobOffers) {
         return jobOffers.stream()
                 .filter(dto -> !dto.offerUrl().isEmpty())
-                .filter(dto -> !offerRepository.existsByOfferUrl(dto.offerUrl()))
+                .filter(dto -> !offerRepository.existsOfferByOfferUrl(dto.offerUrl()))
                 .collect(Collectors.toList());
     }
 
