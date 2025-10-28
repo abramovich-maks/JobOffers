@@ -15,21 +15,17 @@ class OfferFetchable {
     List<OfferResponseDto> fetchAllOffersAndSaveAllIfNotExists() {
         List<Offer> jobOffers = fetchOffers();
         final List<Offer> newOffers = filterNewJobOffers(jobOffers);
-        return offerRepository.saveAll(newOffers).stream()
-                .map(OfferMapper::mapFromOfferToOfferResponseDto)
+        return jobOffers.stream().map(OfferMapper::mapFromOfferToOfferResponseDto)
                 .toList();
+//        return offerRepository.saveAll(newOffers).stream()
+//                .map(OfferMapper::mapFromOfferToOfferResponseDto)
+//                .toList();
     }
 
     private List<Offer> filterNewJobOffers(final List<Offer> jobOffers) {
         return jobOffers.stream()
                 .filter(dto -> !dto.offerUrl().isEmpty())
                 .filter(dto -> !offerRepository.existsByOfferUrl(dto.offerUrl()))
-                .map(dto -> Offer.builder()
-                        .title(dto.title())
-                        .company(dto.company())
-                        .salary(dto.salary())
-                        .offerUrl(dto.offerUrl())
-                        .build())
                 .collect(Collectors.toList());
     }
 

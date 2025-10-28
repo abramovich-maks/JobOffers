@@ -25,7 +25,7 @@ class OffersFacadeTest {
                     new GetOfferResponseDto("Mid", "Allegro", "3000", "url//...6")
             ));
 
-    OfferFacade offerFacade = OfferConfiguration.createOfferFacade(offersRepository, fetcherTest);
+    OfferFacade offerFacade = new OfferConfiguration().offerFacade(offersRepository, fetcherTest);
 
     @Test
     public void should_fetch_from_jobs_from_remote_and_save_all_offers_when_repository_is_empty() {

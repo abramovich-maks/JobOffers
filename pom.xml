@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.11</version>
+        <version>2.7.8</version>
         <relativePath/>
     </parent>
     <groupId>com</groupId>
@@ -20,6 +20,7 @@
         <testcontainers.version>1.17.4</testcontainers.version>
         <assertj-core.version>3.19.0</assertj-core.version>
         <mockito-core.version>4.9.0</mockito-core.version>
+        <awaitility.version>4.3.0</awaitility.version>
     </properties>
     <dependencies>
         <!--        SPRING BOOT-->
@@ -80,6 +81,13 @@
             <groupId>com.github.tomakehurst</groupId>
             <artifactId>wiremock-jre8-standalone</artifactId>
             <version>${wiremock-jre8.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!--        AWAITILITY-->
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${awaitility.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
