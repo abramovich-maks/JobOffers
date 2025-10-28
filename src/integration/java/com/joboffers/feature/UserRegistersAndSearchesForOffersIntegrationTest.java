@@ -3,29 +3,47 @@ package com.joboffers.feature;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.joboffers.BaseIntegrationTest;
 import com.joboffers.ExampleJobOfferResponse;
+import com.joboffers.domain.offer.dto.OfferResponseDto;
 import com.joboffers.infrastructure.offer.scheduler.HttpOffersScheduler;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+
+@SpringBootTest
 class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTest implements ExampleJobOfferResponse {
 
+
+    private final HttpOffersScheduler httpOffersScheduler;
+
     @Autowired
-    HttpOffersScheduler httpOffersScheduler;
+    UserRegistersAndSearchesForOffersIntegrationTest(final HttpOffersScheduler httpOffersScheduler) {
+        this.httpOffersScheduler = httpOffersScheduler;
+    }
 
     @Test
     public void should_user_views_offers() {
-//         step 1: na zewnętrznym serwerze HTTP http://ec2-3-127-218-34.eu-central-1.compute.amazonaws.com nie ma żadnych ofert (26.10.2025 09:00)
+        // step 1: na zewnętrznym serwerze HTTP http://ec2-3-127-218-34.eu-central-1.compute.amazonaws.com nie ma żadnych ofert (26.10.2025 09:00)
+        // given && when && then
         wireMockServer.stubFor(WireMock.get("/offers")
                 .willReturn(WireMock.aResponse()
                         .withStatus(HttpStatus.OK.value())
                         .withHeader("Content-Type", "application/json")
-                        .withBody(bodyWithOneOfferJson())));
+                        .withBody(bodyWithZeroOffersJson())));
 
 //         step 2: harmonogram uruchamia się po raz pierwszy i wysyła żądanie GET do zewnętrznego serwera
 //         step 3: system dodaje 0 ofert do bazy danych
-        httpOffersScheduler.fetchAllOffersAndSaveIfNotExists();
+        // given && when
+        List<OfferResponseDto> newOffers = httpOffersScheduler.fetchAllOffersAndSaveIfNotExists();
+        // then
+        assertThat(newOffers).isEmpty();
     }
+
 //         step 4: użytkownik próbuje uzyskać token JWT, wysyłając POST /token z mail=maksim@mail.con i password=12345 o 12:10
 //         step 5: system zwraca UNAUTHORIZED (401)
 //         step 6: użytkownik wysyła GET /offers bez tokena JWT o 12:15

@@ -14,7 +14,7 @@ class OffersRetriever {
     private final OfferRepository offerRepository;
 
     List<OfferResponseDto> findAllOffers() {
-        return offerRepository.findAllOffers().stream()
+        return offerRepository.findAll().stream()
                 .map(OfferMapper::mapFromOfferToOfferResponseDto)
                 .collect(Collectors.toList());
     }
