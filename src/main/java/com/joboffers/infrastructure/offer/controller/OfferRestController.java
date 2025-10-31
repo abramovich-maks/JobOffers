@@ -19,6 +19,7 @@ class OfferRestController {
     public ResponseEntity<List<OfferResponseDto>> findAllOffers() {
         List<OfferResponseDto> allOffers = offerFacade.findAllOffers();
         List<OfferResponseDto> offersDtoList = allOffers.stream().map(offer -> OfferResponseDto.builder()
+                        .offerId(offer.offerId())
                         .title(offer.title())
                         .company(offer.company())
                         .salary(offer.salary())
