@@ -18,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
@@ -95,8 +96,22 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         assertThat(threeOffers).hasSize(3);
 //         step 19: użytkownik wysyła GET /offers/1 o 15:10
 //         step 20: system zwraca OK (200) z ofertą id=1
+
+
 //         step 21: użytkownik wysyła GET /offers/100 o 15:15
-//         step 22: system zwraca NOT_FOUND (404) z komunikatem "Oferta o id 100 nie została znaleziona"
+//         step 22: system zwraca NOT_FOUND (404) z komunikatem "Offer with id 100 not found"
+        // given
+        // when
+        ResultActions performGetOfferWithNotExistId = mockMvc.perform(get("/offers/100"));
+        // then
+        performGetOfferWithNotExistId.andExpect(status().isNotFound())
+                .andExpect(content().json("""
+                        {
+                        "message" : "Offer with id 100 not found",
+                        "status": "NOT_FOUND"
+                        }
+                        """.trim()));
+
 //         step 23: na zewnętrznym serwerze pojawiły się kolejne 2 nowe oferty (26.10.2025 17:00)
 //         step 24: harmonogram uruchamia się po raz trzeci o 18:00 i wysyła żądanie GET do zewnętrznego serwera
 //         step 25: system dodaje 2 nowe oferty o identyfikatorach 4 i 5 do bazy danych
