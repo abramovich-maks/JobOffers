@@ -99,7 +99,7 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
 
 
 //         step 21: użytkownik wysyła GET /offers/100 o 15:15
-//         step 22: system zwraca NOT_FOUND (404) z komunikatem "Oferta o id 100 nie została znaleziona"
+//         step 22: system zwraca NOT_FOUND (404) z komunikatem "Offer with id 100 not found"
         // given
         // when
         ResultActions performGetOfferWithNotExistId = mockMvc.perform(get("/offers/100"));
@@ -107,7 +107,7 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         performGetOfferWithNotExistId.andExpect(status().isNotFound())
                 .andExpect(content().json("""
                         {
-                        "message" : "Oferta o id 100 nie została znaleziona",
+                        "message" : "Offer with id 100 not found",
                         "status": "NOT_FOUND"
                         }
                         """.trim()));
