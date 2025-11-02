@@ -5,6 +5,7 @@ import com.joboffers.domain.offer.dto.OfferResponseDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @AllArgsConstructor
 @Log4j2
+@Component
 public class HttpOffersScheduler {
 
     private final OfferFacade offerFacade;

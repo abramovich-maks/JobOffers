@@ -87,15 +87,15 @@ class OffersFacadeTest {
     }
 
     @Test
-        public void should_throw_not_found_exception_when_offer_not_found() {
-            // given
-            assertThat(offerFacade.findAllOffers()).isEmpty();
+    public void should_throw_not_found_exception_when_offer_not_found() {
+        // given
+        assertThat(offerFacade.findAllOffers()).isEmpty();
 
-            // when
-            Throwable thrown = catchThrowable(() -> offerFacade.findOfferById("100"));
-            // then
-            AssertionsForClassTypes.assertThat(thrown)
-                    .isInstanceOf(OfferNotFoundException.class)
-                    .hasMessage("Offer with id 100 not found");
-        }
+        // when
+        Throwable thrown = catchThrowable(() -> offerFacade.findOfferById("100"));
+        // then
+        AssertionsForClassTypes.assertThat(thrown)
+                .isInstanceOf(OfferNotFoundException.class)
+                .hasMessage("Offer with id 100 not found");
+    }
 }
