@@ -1,4 +1,4 @@
-package com.joboffers.infrastructure.offer.controller.error;
+package com.joboffers.infrastructure.offer.controller.dto;
 
 import org.springframework.http.HttpStatus;
 

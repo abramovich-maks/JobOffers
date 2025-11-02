@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.joboffers.BaseIntegrationTest;
 import com.joboffers.ExampleJobOfferResponse;
+import com.joboffers.domain.offer.dto.CreateOfferResponseDto;
 import com.joboffers.domain.offer.dto.OfferResponseDto;
 import com.joboffers.infrastructure.offer.scheduler.HttpOffersScheduler;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,9 @@ import org.springframework.test.web.servlet.ResultActions;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -25,13 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTest implements ExampleJobOfferResponse {
 
-
-    private final HttpOffersScheduler httpOffersScheduler;
-
     @Autowired
-    UserRegistersAndSearchesForOffersIntegrationTest(final HttpOffersScheduler httpOffersScheduler) {
-        this.httpOffersScheduler = httpOffersScheduler;
-    }
+    private HttpOffersScheduler httpOffersScheduler;
 
     @Test
     public void should_user_views_offers() throws Exception {
@@ -117,5 +115,43 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
 //         step 25: system dodaje 2 nowe oferty o identyfikatorach 4 i 5 do bazy danych
 //         step 26: użytkownik wysyła GET /offers z nagłówkiem Authorization: Bearer AAAA.BBBB.CCC o 18:05
 //         step 27: system zwraca OK (200) z 5 ofertami o identyfikatorach 1, 2, 3, 4 i 5
+
+
+//         step 28: user made POST /offers with header “Authorization: Bearer AAAA.BBBB.CCC” and offer as body and system returned CREATED(201) with saved offer
+        // given
+        // when
+        ResultActions performPostOffer = mockMvc.perform(post("/offers").content(
+                """
+                        {
+                        "title": "Junior Java Developer",
+                        "company": "Amelco Limited",
+                        "salary": "450-600 PLN/day on B2B",
+                        "offerUrl": "https://www.linkedin.com/jobs/view/4310359141"
+                        }
+                        """.trim()).contentType(MediaType.APPLICATION_JSON));
+        // then
+        MvcResult createdOfferResult = performPostOffer.andExpect(status().isCreated()).andReturn();
+        String createdOfferJson = createdOfferResult.getResponse().getContentAsString();
+        CreateOfferResponseDto createOfferRequestDto = objectMapper.readValue(createdOfferJson, CreateOfferResponseDto.class);
+        assertAll(
+                () -> assertThat(createOfferRequestDto.message()).isEqualTo("Offer created."),
+                () -> assertThat(createOfferRequestDto.offer().offerId()).isNotNull(),
+                () -> assertThat(createOfferRequestDto.offer().title()).isEqualTo("Junior Java Developer"),
+                () -> assertThat(createOfferRequestDto.offer().company()).isEqualTo("Amelco Limited"),
+                () -> assertThat(createOfferRequestDto.offer().salary()).isEqualTo("450-600 PLN/day on B2B"),
+                () -> assertThat(createOfferRequestDto.offer().offerUrl()).isEqualTo("https://www.linkedin.com/jobs/view/4310359141")
+        );
+
+
+//         step 29: user made GET /offers with header “Authorization: Bearer AAAA.BBBB.CCC” and system returned OK(200) with 4 offers
+        ResultActions performWithFourOffers = mockMvc.perform(get("/offers"));
+        String offersJson = performWithFourOffers.andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        OfferResponseDto[] offerResponseWithFourOffers = objectMapper.readValue(offersJson, OfferResponseDto[].class);
+        List<OfferResponseDto> fourOffers = List.of(offerResponseWithFourOffers);
+        // then
+        assertThat(fourOffers).hasSize(4);
     }
 }
