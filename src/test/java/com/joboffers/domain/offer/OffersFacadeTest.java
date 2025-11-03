@@ -98,4 +98,18 @@ class OffersFacadeTest {
                 .isInstanceOf(OfferNotFoundException.class)
                 .hasMessage("Offer with id 100 not found");
     }
+
+    @Test
+    public void should_throw_duplicate_key_exception_when_save_2_offers_with_duplicate_url() {
+        // given
+        CreateOfferRequestDto firstOfferRequest = new CreateOfferRequestDto("Junior Java", "Company", "1200", "url//...1");
+        CreateOfferRequestDto secondOfferRequest = new CreateOfferRequestDto("Junior Java", "Company", "1200", "url//...1");
+        offerFacade.saveOffer(firstOfferRequest);
+        // when
+        Throwable thrown = catchThrowable(() -> offerFacade.saveOffer(secondOfferRequest));
+        // then
+        assertThat(thrown)
+                .isInstanceOf(DuplicateKeyException.class)
+                .hasMessage("Offer with offerUrl [url//...1] already exists");
+    }
 }

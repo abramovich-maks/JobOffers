@@ -16,6 +16,9 @@ class OfferAdder {
     private final OfferRepository offerRepository;
 
     CreateOfferResponseDto addOffer(final CreateOfferRequestDto dto) {
+        if (offerRepository.existsOfferByOfferUrl(dto.offerUrl())) {
+            throw new DuplicateKeyException(dto.offerUrl());
+        }
         Offer offer = mapFromCreateOfferRequestDtoToOffer(dto);
         Offer save = offerRepository.save(offer);
         OfferResponseDto createdOffer = mapFromOfferToOfferResponseDto(save);
