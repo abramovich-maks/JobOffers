@@ -12,8 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.utility.DockerImageName;
 
 import java.util.List;
 
@@ -31,35 +36,38 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
     @Autowired
     private HttpOffersScheduler httpOffersScheduler;
 
+
+    @Container
+    public static final MongoDBContainer mongoDBContainerForLuckyPathTest = new MongoDBContainer(DockerImageName.parse("mongo:4.0.10"));
+
+    @DynamicPropertySource
+    public static void propertyOverride(DynamicPropertyRegistry registry) {
+        registry.add("spring.data.mongodb.uri", mongoDBContainerForLuckyPathTest::getReplicaSetUrl);
+        registry.add("job.offers.http.client.config.port", () -> wireMockServer.getPort());
+        registry.add("job.offers.http.client.config.uri", () -> WIRE_MOCK_HOST);
+    }
+
     @Test
     public void should_user_views_offers() throws Exception {
-        // step 1: na zewnętrznym serwerze HTTP http://ec2-3-127-218-34.eu-central-1.compute.amazonaws.com nie ma żadnych ofert (26.10.2025 09:00)
-        // given && when && then
+        // step 1: na zewnętrznym serwerze HTTP (http://ec2-3-127-218-34.eu-central-1.compute.amazonaws.com) nie ma żadnych ofert; harmonogram uruchamia się po raz pierwszy, wysyła żądanie GET do serwera i system dodaje 0 ofert do bazy danych
+        // given
         wireMockServer.stubFor(WireMock.get("/offers")
                 .willReturn(WireMock.aResponse()
                         .withStatus(HttpStatus.OK.value())
                         .withHeader("Content-Type", "application/json")
                         .withBody(bodyWithZeroOffersJson())));
-
-//         step 2: harmonogram uruchamia się po raz pierwszy i wysyła żądanie GET do zewnętrznego serwera
-//         step 3: system dodaje 0 ofert do bazy danych
-        // given && when
+        // when
         List<OfferResponseDto> newOffers = httpOffersScheduler.fetchAllOffersAndSaveIfNotExists();
         // then
         assertThat(newOffers).isEmpty();
 
-//         step 4: użytkownik próbuje uzyskać token JWT, wysyłając POST /token z mail=maksim@mail.con i password=12345 o 12:10
-//         step 5: system zwraca UNAUTHORIZED (401)
-//         step 6: użytkownik wysyła GET /offers bez tokena JWT o 12:15
-//         step 7: system zwraca UNAUTHORIZED (401)
-//         step 8: użytkownik wysyła POST /register z mail=maksim@mail.con i password=12345 o 12:20
-//         step 9: system rejestruje użytkownika i zwraca OK (200)
-//         step 10: użytkownik ponownie próbuje uzyskać token JWT, wysyłając POST /token z mail=maksim@mail.con i password=12345 o 12:25
-//         step 11: system zwraca OK (200) oraz jwtToken="AAAA.BBBB.CCC"
+//         step 2: użytkownik próbuje uzyskać token JWT, wysyłając POST /token z mail=maksim@mail.com i password=12345 and system returned UNAUTHORIZED(401)
+//         step 3: użytkownik wysyła GET /offers bez tokena JWT ; system zwraca UNAUTHORIZED (401)
+//         step 4: użytkownik wysyła POST /register z mail=maksim@mail.com i password=12345;  system rejestruje użytkownika i zwraca OK (200)
+//         step 5: użytkownik ponownie próbuje uzyskać token JWT, wysyłając POST /token z mail=maksim@mail.com i password=12345;  system zwraca OK (200) oraz jwtToken="AAAA.BBBB.CCC"
 
 
-//         step 12: użytkownik wysyła GET /offers z nagłówkiem Authorization: Bearer AAAA.BBBB.CCC o 12:30
-//         step 13: system zwraca OK (200) z 0 ofert
+        // step 6: użytkownik wysyła GET /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC”; system zwraca OK (200) z 0 ofert
         //given && when
         ResultActions perform = mockMvc.perform(get("/offers")
                 .contentType(MediaType.APPLICATION_JSON));
@@ -70,20 +78,21 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         // then
         assertThat(offers).isEmpty();
 
-//         step 14: na zewnętrznym serwerze pojawiły się 3 nowe oferty (26.10.2025 14:00)
-        // given && when && then
+
+        // step 7: na zewnętrznym serwerze pojawiają się 3 nowe oferty; harmonogram uruchamia się po raz drugi, wysyła żądanie GET do serwera i system dodaje 3 nowe oferty o identyfikatorach 100, 200 i 300 do bazy danych
+        // given
         wireMockServer.stubFor(WireMock.get("/offers")
                 .willReturn(WireMock.aResponse()
                         .withStatus(HttpStatus.OK.value())
                         .withHeader("Content-Type", "application/json")
                         .withBody(bodyWithThreeOffersJson())));
-
-//         step 15: harmonogram uruchamia się po raz drugi o 15:00 i wysyła żądanie GET do zewnętrznego serwera
-//         step 16: system dodaje 3 nowe oferty o identyfikatorach 100, 200 i 300 do bazy danych
+        // when
         List<OfferResponseDto> newOffers_2 = httpOffersScheduler.fetchAllOffersAndSaveIfNotExists();
+        // then
         assertThat(newOffers_2).hasSize(3);
-//         step 17: użytkownik wysyła GET /offers z nagłówkiem Authorization: Bearer AAAA.BBBB.CCC o 15:05
-//         step 18: system zwraca OK (200) z 3 ofertami o identyfikatorach 1, 2 i 3
+
+
+        // step 8: użytkownik wysyła GET /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC”; system zwraca OK (200) z 3 ofertami o identyfikatorach 1, 2 i 3
         //given && when
         ResultActions performWithThreeOffers = mockMvc.perform(get("/offers"));
         MvcResult performResult = performWithThreeOffers.andExpect(status().isOk()).andReturn();
@@ -92,12 +101,26 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         List<OfferResponseDto> threeOffers = List.of(offerResponseWithThreeOffers);
         // then
         assertThat(threeOffers).hasSize(3);
-//         step 19: użytkownik wysyła GET /offers/1 o 15:10
-//         step 20: system zwraca OK (200) z ofertą id=1
 
 
-//         step 21: użytkownik wysyła GET /offers/100 o 15:15
-//         step 22: system zwraca NOT_FOUND (404) z komunikatem "Offer with id 100 not found"
+        // step 9: użytkownik wysyła GET /offers/1; system zwraca OK (200) z ofertą o id=1
+        // given
+        String offerId = threeOffers.get(0).offerId();
+        // when
+        ResultActions performGetOfferWithExistId = mockMvc.perform(get("/offers/" + offerId));
+        // then
+        performGetOfferWithExistId.andExpect(status().isOk())
+                .andExpect(content().json("""
+                        {
+                        "title": "Junior Java Backend Developer",
+                        "company": "VHV Informatyka Sp. z o.o.",
+                        "salary": null,
+                        "offerUrl": "https://nofluffjobs.com/pl/job/junior-java-backend-developer-vhv-informatyka-warszawa"
+                        }
+                        """.trim()));
+
+
+        // step 10: użytkownik wysyła GET /offers/100 o 15:15; system zwraca NOT_FOUND (404) z komunikatem "Offer with id 100 not found"
         // given
         // when
         ResultActions performGetOfferWithNotExistId = mockMvc.perform(get("/offers/100"));
@@ -110,14 +133,31 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
                         }
                         """.trim()));
 
-//         step 23: na zewnętrznym serwerze pojawiły się kolejne 2 nowe oferty (26.10.2025 17:00)
-//         step 24: harmonogram uruchamia się po raz trzeci o 18:00 i wysyła żądanie GET do zewnętrznego serwera
-//         step 25: system dodaje 2 nowe oferty o identyfikatorach 4 i 5 do bazy danych
-//         step 26: użytkownik wysyła GET /offers z nagłówkiem Authorization: Bearer AAAA.BBBB.CCC o 18:05
-//         step 27: system zwraca OK (200) z 5 ofertami o identyfikatorach 1, 2, 3, 4 i 5
+
+        // step 11: na zewnętrznym serwerze pojawiają się kolejne 2 nowe oferty; harmonogram uruchamia się po raz trzeci, wysyła żądanie GET do serwera i system dodaje 2 nowe oferty o identyfikatorach 4 i 5 do bazy danych
+        // given
+        wireMockServer.stubFor(WireMock.get("/offers")
+                .willReturn(WireMock.aResponse()
+                        .withStatus(HttpStatus.OK.value())
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(bodyWithTwoOffersJson())));
+        // when
+        List<OfferResponseDto> newOffers2 = httpOffersScheduler.fetchAllOffersAndSaveIfNotExists();
+        // then
+        assertThat(newOffers2).hasSize(2);
 
 
-//         step 28: user made POST /offers with header “Authorization: Bearer AAAA.BBBB.CCC” and offer as body and system returned CREATED(201) with saved offer
+        // step 12: użytkownik wysyła GET /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC”; system zwraca OK (200) z 5 ofertami o identyfikatorach 1, 2, 3, 4 i 5
+        //given && when
+        ResultActions performWithFiveOffers = mockMvc.perform(get("/offers"));
+        MvcResult performResultWithFive = performWithFiveOffers.andExpect(status().isOk()).andReturn();
+        String jsonWithFiveOffers = performResultWithFive.getResponse().getContentAsString();
+        OfferResponseDto[] offerResponseWithFiveOffers = objectMapper.readValue(jsonWithFiveOffers, OfferResponseDto[].class);
+        List<OfferResponseDto> fiveOffers = List.of(offerResponseWithFiveOffers);
+        // then
+        assertThat(fiveOffers).hasSize(5);
+
+        // step 13: użytkownik wysyła POST /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC” oraz danymi oferty w body; system zwraca CREATED (201) i zapisuje nową ofertę
         // given
         // when
         ResultActions performPostOffer = mockMvc.perform(post("/offers").content(
@@ -143,15 +183,55 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         );
 
 
-//         step 29: user made GET /offers with header “Authorization: Bearer AAAA.BBBB.CCC” and system returned OK(200) with 4 offers
-        ResultActions performWithFourOffers = mockMvc.perform(get("/offers"));
-        String offersJson = performWithFourOffers.andExpect(status().isOk())
+        // step 14: użytkownik wysyła GET /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC”; system zwraca OK (200) z 6 ofertami, w tym nowo utworzoną
+        ResultActions finalPerform = mockMvc.perform(get("/offers"));
+        String offersJson = finalPerform.andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        OfferResponseDto[] offerResponseWithFourOffers = objectMapper.readValue(offersJson, OfferResponseDto[].class);
-        List<OfferResponseDto> fourOffers = List.of(offerResponseWithFourOffers);
+        OfferResponseDto[] finalResponse = objectMapper.readValue(offersJson, OfferResponseDto[].class);
+        List<OfferResponseDto> finalListOffers = List.of(finalResponse);
         // then
-        assertThat(fourOffers).hasSize(4);
+        assertThat(finalListOffers).hasSize(6);
+        finalPerform.andExpect(status().isOk()).andExpect(content().json("""
+                [
+                {
+                       "title": "Junior Java Backend Developer",
+                       "company": "VHV Informatyka Sp. z o.o.",
+                       "salary": null,
+                       "offerUrl": "https://nofluffjobs.com/pl/job/junior-java-backend-developer-vhv-informatyka-warszawa"
+                       },
+                       {
+                       "title": "Software Developer",
+                       "company": "BrainworkZ",
+                       "salary": null,
+                       "offerUrl": "https://nofluffjobs.com/pl/job/software-developer-brainworkz-warsaw"
+                       },
+                       {
+                       "title": "AI Engineer",
+                       "company": "Strategy",
+                       "salary": null,
+                       "offerUrl": "https://nofluffjobs.com/pl/job/ai-engineer-strategy-warsaw"
+                       },
+                       {
+                        "title": "Junior Java Developer NOWA",
+                        "company": "Netcompany Poland Sp. z o.o.",
+                        "salary": null,
+                        "offerUrl": "https://nofluffjobs.com/pl/job/junior-java-developer-netcompany-poland-warsaw-3"
+                        },
+                        {
+                        "title": "Praktykant Java Developer NOWA",
+                        "company": "Pentacomp Systemy Informatyczne S.A.",
+                        "salary": null,
+                        "offerUrl": "https://nofluffjobs.com/pl/job/praktykant-java-developer-pentacomp-systemy-informatyczne-warszawa"
+                        },
+                        {
+                        "title": "Junior Java Developer",
+                        "company": "Amelco Limited",
+                        "salary": "450-600 PLN/day on B2B",
+                        "offerUrl": "https://www.linkedin.com/jobs/view/4310359141"
+                       }
+                       ]
+                """));
     }
 }

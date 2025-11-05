@@ -10,60 +10,18 @@ public interface ExampleJobOfferResponse {
         return """
                 [
                 {
-                    "title": "Software Engineer - Mobile (m/f/d)",
-                    "company": "Cybersource",
-                    "salary": "4k - 8k PLN",
-                    "offerUrl": "https://nofluffjobs.com/pl/job/software-engineer-mobile-m-f-d-cybersource-poznan-entavdpn"
+                "offerId": "690899a30f7c5b2be04fe499",
+                "title": "Junior Java Developer NOWA",
+                "company": "Netcompany Poland Sp. z o.o.",
+                "salary": null,
+                "offerUrl": "https://nofluffjobs.com/pl/job/junior-java-developer-netcompany-poland-warsaw-3"
                 },
                 {
-                    "title": "Junior DevOps Engineer",
-                    "company": "CDQ Poland",
-                    "salary": "8k - 14k PLN",
-                    "offerUrl": "https://nofluffjobs.com/pl/job/junior-devops-engineer-cdq-poland-wroclaw-gnymtxqd"
-                }
-                ]
-                """.trim();
-    }
-
-    default String bodyWithOneOfferJson() {
-        return """
-                [
-                {
-                    "title": "Software Engineer - Mobile (m/f/d)",
-                    "company": "Cybersource",
-                    "salary": "4k - 8k PLN",
-                    "offerUrl": "https://nofluffjobs.com/pl/job/software-engineer-mobile-m-f-d-cybersource-poznan-entavdpn"
-                }
-                ]
-                """.trim();
-    }
-
-    default String bodyWithFourOffersJson() {
-        return """
-                [
-                {
-                "title": "Software Engineer - Mobile (m/f/d)",
-                "company": "Cybersource",
-                "salary": "4k - 8k PLN",
-                "offerUrl": "https://nofluffjobs.com/pl/job/software-engineer-mobile-m-f-d-cybersource-poznan-entavdpn"
-                },
-                {
-                "title": "Junior DevOps Engineer",
-                "company": "CDQ Poland",
-                "salary": "8k - 14k PLN",
-                "offerUrl": "https://nofluffjobs.com/pl/job/junior-devops-engineer-cdq-poland-wroclaw-gnymtxqd"
-                },
-                {
-                "title": "Junior Java Developer",
-                "company": "Sollers Consulting",
-                "salary": "7 500 - 11 500 PLN",
-                "offerUrl": "https://nofluffjobs.com/pl/job/junior-java-developer-sollers-consulting-warszawa-s6et1ucc"
-                },
-                {
-                "title": "Junior Full Stack Developer",
-                "company": "Vertabelo S.A.",
-                "salary": "7 000 - 9 000 PLN",
-                "offerUrl": "https://nofluffjobs.com/pl/job/junior-full-stack-developer-vertabelo-remote-k7m9xpnm"
+                "offerId": "690899a30f7c5b2be04fe49a",
+                "title": "Praktykant Java Developer NOWA",
+                "company": "Pentacomp Systemy Informatyczne S.A.",
+                "salary": null,
+                "offerUrl": "https://nofluffjobs.com/pl/job/praktykant-java-developer-pentacomp-systemy-informatyczne-warszawa"
                 }
                 ]
                 """.trim();
@@ -73,22 +31,25 @@ public interface ExampleJobOfferResponse {
         return """
                 [
                 {
-                "title": "Software Engineer - Mobile (m/f/d)",
-                "company": "Cybersource",
-                "salary": "4k - 8k PLN",
-                "offerUrl": "https://nofluffjobs.com/pl/job/software-engineer-mobile-m-f-d-cybersource-poznan-entavdpn"
+                "offerId": "690899a30f7c5b2be04fe49b",
+                "title": "Junior Java Backend Developer",
+                "company": "VHV Informatyka Sp. z o.o.",
+                "salary": null,
+                "offerUrl": "https://nofluffjobs.com/pl/job/junior-java-backend-developer-vhv-informatyka-warszawa"
                 },
                 {
-                "title": "Junior DevOps Engineer",
-                "company": "CDQ Poland",
-                "salary": "8k - 14k PLN",
-                "offerUrl": "https://nofluffjobs.com/pl/job/junior-devops-engineer-cdq-poland-wroclaw-gnymtxqd"
+                "offerId": "690899a30f7c5b2be04fe49c",
+                "title": "Software Developer",
+                "company": "BrainworkZ",
+                "salary": null,
+                "offerUrl": "https://nofluffjobs.com/pl/job/software-developer-brainworkz-warsaw"
                 },
                 {
-                "title": "Junior Java Developer",
-                "company": "Sollers Consulting",
-                "salary": "7 500 - 11 500 PLN",
-                "offerUrl": "https://nofluffjobs.com/pl/job/junior-java-developer-sollers-consulting-warszawa-s6et1ucc"
+                "offerId": "690899a30f7c5b2be04fe49d",
+                "title": "AI Engineer",
+                "company": "Strategy",
+                "salary": null,
+                "offerUrl": "https://nofluffjobs.com/pl/job/ai-engineer-strategy-warsaw"
                 }
                 ]
                 """.trim();
