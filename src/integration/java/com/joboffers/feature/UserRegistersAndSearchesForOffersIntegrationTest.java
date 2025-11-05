@@ -101,11 +101,19 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         List<OfferResponseDto> threeOffers = List.of(offerResponseWithThreeOffers);
         // then
         assertThat(threeOffers).hasSize(3);
+        OfferResponseDto firstOffer = threeOffers.get(0);
+        OfferResponseDto secondOffer = threeOffers.get(1);
+        OfferResponseDto thirdOffer = threeOffers.get(2);
+        assertThat(threeOffers).containsExactlyInAnyOrder(
+                new OfferResponseDto(firstOffer.offerId(), firstOffer.title(), firstOffer.company(), firstOffer.salary(), firstOffer.offerUrl()),
+                new OfferResponseDto(secondOffer.offerId(), secondOffer.title(), secondOffer.company(), secondOffer.salary(), secondOffer.offerUrl()),
+                new OfferResponseDto(thirdOffer.offerId(), thirdOffer.title(), thirdOffer.company(), thirdOffer.salary(), thirdOffer.offerUrl())
+        );
 
 
         // step 9: użytkownik wysyła GET /offers/1; system zwraca OK (200) z ofertą o id=1
         // given
-        String offerId = threeOffers.get(0).offerId();
+        String offerId = firstOffer.offerId();
         // when
         ResultActions performGetOfferWithExistId = mockMvc.perform(get("/offers/" + offerId));
         // then
@@ -142,9 +150,9 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
                         .withHeader("Content-Type", "application/json")
                         .withBody(bodyWithTwoOffersJson())));
         // when
-        List<OfferResponseDto> newOffers2 = httpOffersScheduler.fetchAllOffersAndSaveIfNotExists();
+        List<OfferResponseDto> nextTwoNewOffers = httpOffersScheduler.fetchAllOffersAndSaveIfNotExists();
         // then
-        assertThat(newOffers2).hasSize(2);
+        assertThat(nextTwoNewOffers).hasSize(2);
 
 
         // step 12: użytkownik wysyła GET /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC”; system zwraca OK (200) z 5 ofertami o identyfikatorach 1, 2, 3, 4 i 5
@@ -156,6 +164,12 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         List<OfferResponseDto> fiveOffers = List.of(offerResponseWithFiveOffers);
         // then
         assertThat(fiveOffers).hasSize(5);
+        OfferResponseDto fourthOffer = nextTwoNewOffers.get(0);
+        OfferResponseDto fivesOffer = nextTwoNewOffers.get(1);
+        assertThat(fiveOffers).contains(
+                new OfferResponseDto(fourthOffer.offerId(), fourthOffer.title(), fourthOffer.company(), fourthOffer.salary(), fourthOffer.offerUrl()),
+                new OfferResponseDto(fivesOffer.offerId(), fivesOffer.title(), fivesOffer.company(), fivesOffer.salary(), fivesOffer.offerUrl())
+        );
 
         // step 13: użytkownik wysyła POST /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC” oraz danymi oferty w body; system zwraca CREATED (201) i zapisuje nową ofertę
         // given
