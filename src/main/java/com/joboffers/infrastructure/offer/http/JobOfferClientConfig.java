@@ -1,7 +1,7 @@
 package com.joboffers.infrastructure.offer.http;
 
 import com.joboffers.domain.offer.JobOfferFetchable;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.AllArgsConstructor;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,7 +11,10 @@ import java.time.Duration;
 
 
 @Configuration
+@AllArgsConstructor
 public class JobOfferClientConfig {
+
+    private final JobOffersRestTemplateConfigurationProperties properties;
 
     @Bean
     public RestTemplateResponseErrorHandler restTemplateResponseErrorHandler() {
@@ -22,16 +25,14 @@ public class JobOfferClientConfig {
     public RestTemplate restTemplate(RestTemplateResponseErrorHandler restTemplateResponseErrorHandler) {
         return new RestTemplateBuilder()
                 .errorHandler(restTemplateResponseErrorHandler)
-                .setConnectTimeout(Duration.ofMillis(5000))
-                .setReadTimeout(Duration.ofMillis(5000))
+                .setConnectTimeout(Duration.ofMillis(properties.connectionTimeout()))
+                .setReadTimeout(Duration.ofMillis(properties.readTimeout()))
                 .build();
     }
 
 
     @Bean
-    public JobOfferFetchable remoteJobOfferClient(RestTemplate restTemplate,
-                                                  @Value("${job.offers.http.client.config.uri}") String uri,
-                                                  @Value("${job.offers.http.client.config.port}") int port) {
-        return new JobOfferRestTemplate(restTemplate, uri, port);
+    public JobOfferFetchable remoteJobOfferClient(RestTemplate restTemplate) {
+        return new JobOfferRestTemplate(restTemplate, properties.uri(), properties.port());
     }
 }

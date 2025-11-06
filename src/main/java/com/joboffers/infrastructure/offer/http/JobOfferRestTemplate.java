@@ -8,8 +8,11 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
@@ -22,23 +25,39 @@ public class JobOfferRestTemplate implements JobOfferFetchable {
     private final String uri;
     private final int port;
 
-    //    http://ec2-3-127-218-34.eu-central-1.compute.amazonaws.com:5057/offers
     @Override
     public List<GetOfferResponseDto> fetchOffers() {
-        String urlForService = getUrlForService("/offers");
+        log.info("Started fetching offers using http client");
         HttpHeaders headers = new HttpHeaders();
         final HttpEntity<HttpHeaders> requestEntity = new HttpEntity<>(headers);
-        final String url = UriComponentsBuilder.fromHttpUrl(urlForService)
-                .toUriString();
-        ResponseEntity<List<GetOfferResponseDto>> response = restTemplate.exchange(
+        try {
+            ResponseEntity<List<GetOfferResponseDto>> response = makeGetRequest(requestEntity);
+            return getOffers(response);
+        } catch (ResourceAccessException e) {
+            log.error("Error while fetching offers using http client: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private List<GetOfferResponseDto> getOffers(final ResponseEntity<List<GetOfferResponseDto>> response) {
+        List<GetOfferResponseDto> responseBody = response.getBody();
+        if (responseBody == null) {
+            log.error("Response Body was null");
+            throw new ResponseStatusException(HttpStatus.NO_CONTENT);
+        }
+        log.info("Success Response Body Returned: {}", response);
+        return responseBody;
+    }
+
+    private ResponseEntity<List<GetOfferResponseDto>> makeGetRequest(final HttpEntity<HttpHeaders> requestEntity) {
+        String urlForService = getUrlForService("/offers");
+        final String url = UriComponentsBuilder.fromHttpUrl(urlForService).toUriString();
+        return restTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 requestEntity,
                 new ParameterizedTypeReference<>() {
                 });
-        List<GetOfferResponseDto> jobOffers = response.getBody();
-        log.info(jobOffers);
-        return jobOffers;
     }
 
     private String getUrlForService(String service) {
