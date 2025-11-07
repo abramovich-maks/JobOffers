@@ -1,7 +1,7 @@
 package com.joboffers.infrastructure.security.jwt;
 
-import com.joboffers.infrastructure.token.controller.dto.JwtResponseDto;
-import com.joboffers.infrastructure.token.controller.dto.TokenRequestDto;
+import com.joboffers.infrastructure.loginandregister.controller.dto.JwtResponseDto;
+import com.joboffers.infrastructure.loginandregister.controller.dto.TokenRequestDto;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

@@ -1,8 +1,8 @@
-package com.joboffers.infrastructure.token.controller;
+package com.joboffers.infrastructure.loginandregister.controller;
 
 import com.joboffers.infrastructure.security.jwt.JwtAuthenticatorFacade;
-import com.joboffers.infrastructure.token.controller.dto.JwtResponseDto;
-import com.joboffers.infrastructure.token.controller.dto.TokenRequestDto;
+import com.joboffers.infrastructure.loginandregister.controller.dto.JwtResponseDto;
+import com.joboffers.infrastructure.loginandregister.controller.dto.TokenRequestDto;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

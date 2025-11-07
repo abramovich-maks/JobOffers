@@ -12,19 +12,19 @@ class UserAdder {
     private final UserRepository userRepository;
 
     RegisterUserResponseDto register(final RegisterUserRequestDto user) {
-        if (userExists(user.mail())) {
-            log.warn("User with email: {} already exists", user.mail());
-            throw new UserAlreadyExistException(user.mail());
+        if (userExists(user.email())) {
+            log.warn("User with email: {} already exists", user.email());
+            throw new UserAlreadyExistException(user.email());
         }
         User createdUser = User.builder()
-                .email(user.mail())
+                .email(user.email())
                 .password(user.password())
                 .build();
         User savedUser = userRepository.save(createdUser);
         log.info("Saved user with id: {}", savedUser.userId());
         return RegisterUserResponseDto
                 .builder()
-                .mail(createdUser.email())
+                .email(createdUser.email())
                 .message("Success. User created.")
                 .build();
     }

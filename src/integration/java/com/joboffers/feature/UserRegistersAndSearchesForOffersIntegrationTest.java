@@ -3,7 +3,7 @@ package com.joboffers.feature;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.joboffers.BaseIntegrationTest;
-import com.joboffers.ExampleJobOfferResponse;
+import com.joboffers.IntegrationTestData;
 import com.joboffers.domain.offer.dto.CreateOfferResponseDto;
 import com.joboffers.domain.offer.dto.OfferResponseDto;
 import com.joboffers.infrastructure.offer.scheduler.HttpOffersScheduler;
@@ -27,11 +27,12 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 @SpringBootTest
-class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTest implements ExampleJobOfferResponse {
+class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTest implements IntegrationTestData {
 
     @Autowired
     private HttpOffersScheduler httpOffersScheduler;
@@ -64,24 +65,31 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
 
 //         step 2: użytkownik próbuje uzyskać token JWT, wysyłając POST /token z mail=maksim@mail.com i password=12345 and system returned UNAUTHORIZED(401)
         // given && when
-        ResultActions failedLoginRequest = mockMvc.perform(post("/token").content(
-                """
-                        {
-                        "login": "maksim@mail.com",
-                        "password": "12345"
-                        }
-                        """.trim()).contentType(MediaType.APPLICATION_JSON));
         // then
-        failedLoginRequest.andExpect(status().isUnauthorized())
-                .andExpect(content().json("""
-                        {
-                          "message": "Bad credentials",
-                          "status": "UNAUTHORIZED"
-                        }
-                        """.trim()));
+        mockMvc.perform(post("/token").content(requestBodyLogin())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Bad credentials"))
+                .andExpect(jsonPath("$.status").value("UNAUTHORIZED"));
+
 
 //         step 3: użytkownik wysyła GET /offers bez tokena JWT ; system zwraca UNAUTHORIZED (401)
-//         step 4: użytkownik wysyła POST /register z mail=maksim@mail.com i password=12345;  system rejestruje użytkownika i zwraca OK (200)
+        //given && when
+        ResultActions failedGetOffersRequest = mockMvc.perform(get("/offers")
+                .contentType(MediaType.APPLICATION_JSON));
+        // then
+        failedGetOffersRequest.andExpect(status().isForbidden());
+
+
+//         step 4: użytkownik wysyła POST /register z mail=maksim@mail.com i password=12345;  system rejestruje użytkownika i zwraca CREATED (201)
+        // given when && then
+        mockMvc.perform(post("/register").content(requestBodyRegister())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.email").value("maksim@mail.com"))
+                .andExpect(jsonPath("$.message").value("Success. User created."));
+
+
 //         step 5: użytkownik ponownie próbuje uzyskać token JWT, wysyłając POST /token z mail=maksim@mail.com i password=12345;  system zwraca OK (200) oraz jwtToken="AAAA.BBBB.CCC"
 
 
@@ -136,28 +144,17 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         ResultActions performGetOfferWithExistId = mockMvc.perform(get("/offers/" + offerId));
         // then
         performGetOfferWithExistId.andExpect(status().isOk())
-                .andExpect(content().json("""
-                        {
-                        "title": "Junior Java Backend Developer",
-                        "company": "VHV Informatyka Sp. z o.o.",
-                        "salary": null,
-                        "offerUrl": "https://nofluffjobs.com/pl/job/junior-java-backend-developer-vhv-informatyka-warszawa"
-                        }
-                        """.trim()));
+                .andExpect(jsonPath("$.title").value("Junior Java Backend Developer"))
+                .andExpect(jsonPath("$.company").value("VHV Informatyka Sp. z o.o."))
+                .andExpect(jsonPath("$.salary").value("34"))
+                .andExpect(jsonPath("$.offerUrl").value("https://nofluffjobs.com/pl/job/junior-java-backend-developer-vhv-informatyka-warszawa"));
 
 
         // step 10: użytkownik wysyła GET /offers/100 o 15:15; system zwraca NOT_FOUND (404) z komunikatem "Offer with id 100 not found"
-        // given
-        // when
-        ResultActions performGetOfferWithNotExistId = mockMvc.perform(get("/offers/100"));
-        // then
-        performGetOfferWithNotExistId.andExpect(status().isNotFound())
-                .andExpect(content().json("""
-                        {
-                        "message" : "Offer with id 100 not found",
-                        "status": "NOT_FOUND"
-                        }
-                        """.trim()));
+        // given && when && then
+        mockMvc.perform(get("/offers/100"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().json(expectedOfferNotFoundJson("100")));
 
 
         // step 11: na zewnętrznym serwerze pojawiają się kolejne 2 nowe oferty; harmonogram uruchamia się po raz trzeci, wysyła żądanie GET do serwera i system dodaje 2 nowe oferty o identyfikatorach 4 i 5 do bazy danych
@@ -190,21 +187,15 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         );
 
         // step 13: użytkownik wysyła POST /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC” oraz danymi oferty w body; system zwraca CREATED (201) i zapisuje nową ofertę
-        // given
-        // when
-        ResultActions performPostOffer = mockMvc.perform(post("/offers").content(
-                """
-                        {
-                        "title": "Junior Java Developer",
-                        "company": "Amelco Limited",
-                        "salary": "450-600 PLN/day on B2B",
-                        "offerUrl": "https://www.linkedin.com/jobs/view/4310359141"
-                        }
-                        """.trim()).contentType(MediaType.APPLICATION_JSON));
+        // given && when
+        MvcResult createdOfferResult = mockMvc.perform(post("/offers")
+                        .content(createOfferRequestBody())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String responseJson = createdOfferResult.getResponse().getContentAsString();
+        CreateOfferResponseDto createOfferRequestDto = objectMapper.readValue(responseJson, CreateOfferResponseDto.class);
         // then
-        MvcResult createdOfferResult = performPostOffer.andExpect(status().isCreated()).andReturn();
-        String createdOfferJson = createdOfferResult.getResponse().getContentAsString();
-        CreateOfferResponseDto createOfferRequestDto = objectMapper.readValue(createdOfferJson, CreateOfferResponseDto.class);
         assertAll(
                 () -> assertThat(createOfferRequestDto.message()).isEqualTo("Offer created."),
                 () -> assertThat(createOfferRequestDto.offer().offerId()).isNotNull(),
@@ -225,45 +216,8 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         List<OfferResponseDto> finalListOffers = List.of(finalResponse);
         // then
         assertThat(finalListOffers).hasSize(6);
-        finalPerform.andExpect(status().isOk()).andExpect(content().json("""
-                [
-                {
-                       "title": "Junior Java Backend Developer",
-                       "company": "VHV Informatyka Sp. z o.o.",
-                       "salary": null,
-                       "offerUrl": "https://nofluffjobs.com/pl/job/junior-java-backend-developer-vhv-informatyka-warszawa"
-                       },
-                       {
-                       "title": "Software Developer",
-                       "company": "BrainworkZ",
-                       "salary": null,
-                       "offerUrl": "https://nofluffjobs.com/pl/job/software-developer-brainworkz-warsaw"
-                       },
-                       {
-                       "title": "AI Engineer",
-                       "company": "Strategy",
-                       "salary": null,
-                       "offerUrl": "https://nofluffjobs.com/pl/job/ai-engineer-strategy-warsaw"
-                       },
-                       {
-                        "title": "Junior Java Developer NOWA",
-                        "company": "Netcompany Poland Sp. z o.o.",
-                        "salary": null,
-                        "offerUrl": "https://nofluffjobs.com/pl/job/junior-java-developer-netcompany-poland-warsaw-3"
-                        },
-                        {
-                        "title": "Praktykant Java Developer NOWA",
-                        "company": "Pentacomp Systemy Informatyczne S.A.",
-                        "salary": null,
-                        "offerUrl": "https://nofluffjobs.com/pl/job/praktykant-java-developer-pentacomp-systemy-informatyczne-warszawa"
-                        },
-                        {
-                        "title": "Junior Java Developer",
-                        "company": "Amelco Limited",
-                        "salary": "450-600 PLN/day on B2B",
-                        "offerUrl": "https://www.linkedin.com/jobs/view/4310359141"
-                       }
-                       ]
-                """));
+        mockMvc.perform(get("/offers"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(expectedFinalOffersJson()));
     }
 }
