@@ -17,14 +17,14 @@ class UserAdder {
             throw new UserAlreadyExistException(user.mail());
         }
         User createdUser = User.builder()
-                .mail(user.mail())
+                .email(user.mail())
                 .password(user.password())
                 .build();
         User savedUser = userRepository.save(createdUser);
         log.info("Saved user with id: {}", savedUser.userId());
         return RegisterUserResponseDto
                 .builder()
-                .mail(createdUser.mail())
+                .mail(createdUser.email())
                 .message("Success. User created.")
                 .build();
     }

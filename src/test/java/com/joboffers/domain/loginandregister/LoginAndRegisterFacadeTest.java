@@ -3,6 +3,7 @@ package com.joboffers.domain.loginandregister;
 import com.joboffers.domain.loginandregister.dto.RegisterUserRequestDto;
 import com.joboffers.domain.loginandregister.dto.UserDto;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.authentication.BadCredentialsException;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -13,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class LoginAndRegisterFacadeTest {
 
     private final InMemoryLoginAndRegisterFacadeTestImpl userRepository = new InMemoryLoginAndRegisterFacadeTestImpl();
-    LoginAndRegisterFacade loginAndRegisterFacade = LoginAndRegisterConfiguration.createdLoginAndRegisterFacade(userRepository);
+    LoginAndRegisterFacade loginAndRegisterFacade = LoginAndRegisterConfiguration.loginAndRegisterFacade(userRepository);
 
     @Test
     public void should_register_two_users_with_different_mail() {
@@ -88,7 +89,7 @@ class LoginAndRegisterFacadeTest {
                 .build();
         loginAndRegisterFacade.register(userRequestDto);
         // when
-        assertThrows(UserNotFoundException.class, () -> loginAndRegisterFacade.findByEmail("qwe@mail.com"));
+        assertThrows(BadCredentialsException.class, () -> loginAndRegisterFacade.findByEmail("qwe@mail.com"));
         // then
         List<UserDto> allUsers = loginAndRegisterFacade.findAllUsers();
         Stream<String> mail = allUsers.stream().map(UserDto::mail);

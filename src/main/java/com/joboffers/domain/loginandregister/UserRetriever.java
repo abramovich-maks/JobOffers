@@ -3,6 +3,7 @@ package com.joboffers.domain.loginandregister;
 import com.joboffers.domain.loginandregister.dto.UserDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.authentication.BadCredentialsException;
 
 import java.util.List;
 
@@ -16,21 +17,21 @@ class UserRetriever {
         User userByEmail = userRepository.findFirstByEmail(email)
                 .orElseThrow(() -> {
                     log.warn("User with email: {} not found", email);
-                    return new UserNotFoundException(email);
+                    return new BadCredentialsException(email);
                 });
         return UserDto.builder()
                 .userId(userByEmail.userId())
-                .mail(userByEmail.mail())
+                .mail(userByEmail.email())
                 .password(userByEmail.password())
                 .build();
     }
 
     List<UserDto> findAllUsers() {
-        List<User> allUsers = userRepository.findAllUsers();
+        List<User> allUsers = userRepository.findAllByUsername();
         return allUsers.stream()
                 .map(user -> UserDto.builder()
                         .userId(user.userId())
-                        .mail(user.mail())
+                        .mail(user.email())
                         .password(user.password())
                         .build())
                 .toList();

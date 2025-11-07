@@ -43,8 +43,8 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
     @DynamicPropertySource
     public static void propertyOverride(DynamicPropertyRegistry registry) {
         registry.add("spring.data.mongodb.uri", mongoDBContainerForLuckyPathTest::getReplicaSetUrl);
-        registry.add("job.offers.http.client.config.port", () -> wireMockServer.getPort());
-        registry.add("job.offers.http.client.config.uri", () -> WIRE_MOCK_HOST);
+        registry.add("job.offer.http.client.config.port", () -> wireMockServer.getPort());
+        registry.add("job.offer.http.client.config.uri", () -> WIRE_MOCK_HOST);
     }
 
     @Test
@@ -61,7 +61,25 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         // then
         assertThat(newOffers).isEmpty();
 
+
 //         step 2: użytkownik próbuje uzyskać token JWT, wysyłając POST /token z mail=maksim@mail.com i password=12345 and system returned UNAUTHORIZED(401)
+        // given && when
+        ResultActions failedLoginRequest = mockMvc.perform(post("/token").content(
+                """
+                        {
+                        "login": "maksim@mail.com",
+                        "password": "12345"
+                        }
+                        """.trim()).contentType(MediaType.APPLICATION_JSON));
+        // then
+        failedLoginRequest.andExpect(status().isUnauthorized())
+                .andExpect(content().json("""
+                        {
+                          "message": "Bad credentials",
+                          "status": "UNAUTHORIZED"
+                        }
+                        """.trim()));
+
 //         step 3: użytkownik wysyła GET /offers bez tokena JWT ; system zwraca UNAUTHORIZED (401)
 //         step 4: użytkownik wysyła POST /register z mail=maksim@mail.com i password=12345;  system rejestruje użytkownika i zwraca OK (200)
 //         step 5: użytkownik ponownie próbuje uzyskać token JWT, wysyłając POST /token z mail=maksim@mail.com i password=12345;  system zwraca OK (200) oraz jwtToken="AAAA.BBBB.CCC"
