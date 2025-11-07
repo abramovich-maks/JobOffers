@@ -1,6 +1,4 @@
-package com.joboffers.domain.loginandregister.dto;
-
-import lombok.Builder;
+package com.joboffers.infrastructure.loginandregister.controller.dto;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
@@ -10,12 +8,11 @@ import javax.validation.constraints.Size;
 import static com.joboffers.infrastructure.apivalidation.ValidationConstants.PASSWORD_MAX_SIZE;
 import static com.joboffers.infrastructure.apivalidation.ValidationConstants.PASSWORD_MIN_SIZE;
 
-@Builder
-public record RegisterUserRequestDto(
-        @NotNull(message = "{email.not.null}")
-        @NotEmpty(message = "{email.not.empty}")
-        @Email(message = "{register.email}")
-        String email,
+public record TokenRequestDto(
+        @NotNull(message = "{login.not.null}")
+        @NotEmpty(message = "{login.not.empty}")
+        @Email(message = "{login.email}")
+        String login,
 
         @NotNull(message = "{password.not.null}")
         @NotEmpty(message = "{password.not.empty}")
@@ -23,4 +20,3 @@ public record RegisterUserRequestDto(
         String password
 ) {
 }
-
