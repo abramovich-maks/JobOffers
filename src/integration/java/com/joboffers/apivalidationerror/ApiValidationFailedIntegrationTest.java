@@ -4,6 +4,7 @@ import com.joboffers.BaseIntegrationTest;
 import com.joboffers.infrastructure.apivalidation.ApiValidationErrorDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -14,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class ApiValidationFailedIntegrationTest extends BaseIntegrationTest {
 
     @Test
+    @WithMockUser
     public void should_return_400_bad_request_and_validation_message_when_request_has_empty_title() throws Exception {
         // given
         // when
@@ -38,6 +40,7 @@ public class ApiValidationFailedIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    @WithMockUser
     public void should_return_400_bad_request_and_validation_message_when_request_has_empty_company() throws Exception {
         // given
         // when
@@ -63,6 +66,7 @@ public class ApiValidationFailedIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    @WithMockUser
     public void should_return_400_bad_request_and_validation_message_when_request_has_empty_offerUrl() throws Exception {
         // given
         // when
@@ -87,6 +91,7 @@ public class ApiValidationFailedIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    @WithMockUser
     public void should_return_400_bad_request_and_validation_message_when_request_does_not_have_title_and_company_and_url() throws Exception {
         // given
         // when

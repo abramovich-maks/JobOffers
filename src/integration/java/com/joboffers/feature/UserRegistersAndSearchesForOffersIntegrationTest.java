@@ -6,6 +6,7 @@ import com.joboffers.BaseIntegrationTest;
 import com.joboffers.IntegrationTestData;
 import com.joboffers.domain.offer.dto.CreateOfferResponseDto;
 import com.joboffers.domain.offer.dto.OfferResponseDto;
+import com.joboffers.infrastructure.loginandregister.controller.dto.JwtResponseDto;
 import com.joboffers.infrastructure.offer.scheduler.HttpOffersScheduler;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -64,8 +66,7 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
 
 
 //         step 2: użytkownik próbuje uzyskać token JWT, wysyłając POST /token z mail=maksim@mail.com i password=12345 and system returned UNAUTHORIZED(401)
-        // given && when
-        // then
+        // given && when && then
         mockMvc.perform(post("/token").content(requestBodyLogin())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
@@ -91,12 +92,26 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
 
 
 //         step 5: użytkownik ponownie próbuje uzyskać token JWT, wysyłając POST /token z mail=maksim@mail.com i password=12345;  system zwraca OK (200) oraz jwtToken="AAAA.BBBB.CCC"
-
+        // given && when && then
+        MvcResult mvcResultToken = mockMvc.perform(post("/token").content(requestBodyLogin())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk()).andReturn();
+        String jsonWithToken = mvcResultToken.getResponse().getContentAsString();
+        JwtResponseDto jwtResponseDto = objectMapper.readValue(jsonWithToken, JwtResponseDto.class);
+        String token = jwtResponseDto.token();
+        assertAll(
+                () -> assertThat(jwtResponseDto.login()).isEqualTo("maksim@mail.com"),
+                () -> {
+                    assertThat(token).matches(Pattern.compile("^([A-Za-z0-9-_=]+\\.)+([A-Za-z0-9-_=])+\\.?$"));
+                }
+        );
 
         // step 6: użytkownik wysyła GET /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC”; system zwraca OK (200) z 0 ofert
         //given && when
         ResultActions perform = mockMvc.perform(get("/offers")
-                .contentType(MediaType.APPLICATION_JSON));
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + token)
+        );
         MvcResult mvcResult = perform.andExpect(status().isOk()).andReturn();
         String json = mvcResult.getResponse().getContentAsString();
         List<OfferResponseDto> offers = objectMapper.readValue(json, new TypeReference<>() {
@@ -120,7 +135,8 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
 
         // step 8: użytkownik wysyła GET /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC”; system zwraca OK (200) z 3 ofertami o identyfikatorach 1, 2 i 3
         //given && when
-        ResultActions performWithThreeOffers = mockMvc.perform(get("/offers"));
+        ResultActions performWithThreeOffers = mockMvc.perform(get("/offers")
+                .header("Authorization", "Bearer " + token));
         MvcResult performResult = performWithThreeOffers.andExpect(status().isOk()).andReturn();
         String jsonWithThreeOffers = performResult.getResponse().getContentAsString();
         OfferResponseDto[] offerResponseWithThreeOffers = objectMapper.readValue(jsonWithThreeOffers, OfferResponseDto[].class);
@@ -141,18 +157,20 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         // given
         String offerId = firstOffer.offerId();
         // when
-        ResultActions performGetOfferWithExistId = mockMvc.perform(get("/offers/" + offerId));
+        ResultActions performGetOfferWithExistId = mockMvc.perform(get("/offers/" + offerId)
+                .header("Authorization", "Bearer " + token));
         // then
         performGetOfferWithExistId.andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Junior Java Backend Developer"))
                 .andExpect(jsonPath("$.company").value("VHV Informatyka Sp. z o.o."))
-                .andExpect(jsonPath("$.salary").value("34"))
+                .andExpect(jsonPath("$.salary").doesNotExist())
                 .andExpect(jsonPath("$.offerUrl").value("https://nofluffjobs.com/pl/job/junior-java-backend-developer-vhv-informatyka-warszawa"));
 
 
         // step 10: użytkownik wysyła GET /offers/100 o 15:15; system zwraca NOT_FOUND (404) z komunikatem "Offer with id 100 not found"
         // given && when && then
-        mockMvc.perform(get("/offers/100"))
+        mockMvc.perform(get("/offers/100")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andExpect(content().json(expectedOfferNotFoundJson("100")));
 
@@ -163,6 +181,7 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
                 .willReturn(WireMock.aResponse()
                         .withStatus(HttpStatus.OK.value())
                         .withHeader("Content-Type", "application/json")
+                        .withHeader("Authorization", "Bearer " + token)
                         .withBody(bodyWithTwoOffersJson())));
         // when
         List<OfferResponseDto> nextTwoNewOffers = httpOffersScheduler.fetchAllOffersAndSaveIfNotExists();
@@ -172,7 +191,8 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
 
         // step 12: użytkownik wysyła GET /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC”; system zwraca OK (200) z 5 ofertami o identyfikatorach 1, 2, 3, 4 i 5
         //given && when
-        ResultActions performWithFiveOffers = mockMvc.perform(get("/offers"));
+        ResultActions performWithFiveOffers = mockMvc.perform(get("/offers")
+                .header("Authorization", "Bearer " + token));
         MvcResult performResultWithFive = performWithFiveOffers.andExpect(status().isOk()).andReturn();
         String jsonWithFiveOffers = performResultWithFive.getResponse().getContentAsString();
         OfferResponseDto[] offerResponseWithFiveOffers = objectMapper.readValue(jsonWithFiveOffers, OfferResponseDto[].class);
@@ -189,6 +209,7 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         // step 13: użytkownik wysyła POST /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC” oraz danymi oferty w body; system zwraca CREATED (201) i zapisuje nową ofertę
         // given && when
         MvcResult createdOfferResult = mockMvc.perform(post("/offers")
+                        .header("Authorization", "Bearer " + token)
                         .content(createOfferRequestBody())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
@@ -207,7 +228,8 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
 
 
         // step 14: użytkownik wysyła GET /offers z nagłówkiem “Authorization: Bearer AAAA.BBBB.CCC”; system zwraca OK (200) z 6 ofertami, w tym nowo utworzoną
-        ResultActions finalPerform = mockMvc.perform(get("/offers"));
+        ResultActions finalPerform = mockMvc.perform(get("/offers")
+                .header("Authorization", "Bearer " + token));
         String offersJson = finalPerform.andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
@@ -216,8 +238,6 @@ class UserRegistersAndSearchesForOffersIntegrationTest extends BaseIntegrationTe
         List<OfferResponseDto> finalListOffers = List.of(finalResponse);
         // then
         assertThat(finalListOffers).hasSize(6);
-        mockMvc.perform(get("/offers"))
-                .andExpect(status().isOk())
-                .andExpect(content().json(expectedFinalOffersJson()));
+        finalPerform.andExpect(content().json(expectedFinalOffersJson()));
     }
 }
