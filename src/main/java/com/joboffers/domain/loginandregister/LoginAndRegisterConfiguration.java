@@ -1,8 +1,13 @@
 package com.joboffers.domain.loginandregister;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
 class LoginAndRegisterConfiguration {
 
-    public static LoginAndRegisterFacade createdLoginAndRegisterFacade(UserRepository userRepository) {
+    @Bean
+    public static LoginAndRegisterFacade loginAndRegisterFacade(UserRepository userRepository) {
         UserRetriever userRetriever = new UserRetriever(userRepository);
         UserAdder userAdder = new UserAdder(userRepository);
         return new LoginAndRegisterFacade(userRetriever, userAdder);
