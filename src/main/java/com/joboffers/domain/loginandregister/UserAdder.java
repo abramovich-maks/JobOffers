@@ -13,7 +13,7 @@ class UserAdder {
 
     RegisterUserResponseDto register(final RegisterUserRequestDto user) {
         if (userExists(user.email())) {
-            log.warn("User with email: {} already exists", user.email());
+            log.warn("User with email: {} already exists, User not save!", user.email());
             throw new UserAlreadyExistException(user.email());
         }
         User createdUser = User.builder()

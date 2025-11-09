@@ -1,5 +1,6 @@
 package com.joboffers.infrastructure.offer.controller.error;
 
+import com.joboffers.domain.loginandregister.UserAlreadyExistException;
 import com.joboffers.domain.offer.DuplicateKeyException;
 import com.joboffers.domain.offer.OfferNotFoundException;
 import com.joboffers.infrastructure.offer.controller.dto.OfferControllerResponseDto;
@@ -30,6 +31,15 @@ class OfferControllerErrorHandler {
     @ResponseBody
     public OfferPostErrorResponse offerDuplicate(DuplicateKeyException duplicateKeyException) {
         final String message = String.format("Offer with offerUrl [%s] already exists", duplicateKeyException.offerUrl);
+        log.error(message);
+        return new OfferPostErrorResponse(Collections.singletonList(message), HttpStatus.CONFLICT);
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(UserAlreadyExistException.class)
+    @ResponseBody
+    public OfferPostErrorResponse mailDuplicate(UserAlreadyExistException duplicateMailException) {
+        final String message = String.format("eMail [%s] already exists", duplicateMailException.userEmail);
         log.error(message);
         return new OfferPostErrorResponse(Collections.singletonList(message), HttpStatus.CONFLICT);
     }
