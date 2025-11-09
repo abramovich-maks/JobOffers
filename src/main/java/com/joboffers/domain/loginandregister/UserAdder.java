@@ -21,7 +21,7 @@ class UserAdder {
                 .password(user.password())
                 .build();
         User savedUser = userRepository.save(createdUser);
-        log.info("Saved user with id: {}", savedUser.userId());
+        log.info("Saved user with id:[{}] and email:[{}]", savedUser.userId(), savedUser.email());
         return RegisterUserResponseDto
                 .builder()
                 .email(createdUser.email())
