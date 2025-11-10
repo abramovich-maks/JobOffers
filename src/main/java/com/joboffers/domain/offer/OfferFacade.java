@@ -4,6 +4,7 @@ import com.joboffers.domain.offer.dto.CreateOfferRequestDto;
 import com.joboffers.domain.offer.dto.CreateOfferResponseDto;
 import com.joboffers.domain.offer.dto.OfferResponseDto;
 import lombok.AllArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.List;
 
@@ -14,6 +15,7 @@ public class OfferFacade {
     private final OfferAdder offerAdder;
     private final OfferFetchable offerFetchable;
 
+    @Cacheable("jobOffers")
     public List<OfferResponseDto> findAllOffers() {
         return offersRetriever.findAllOffers();
     }
